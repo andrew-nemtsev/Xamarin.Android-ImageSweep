@@ -12,11 +12,7 @@ This script has been tested on Python 2.7 and Python 3.0.
 Works with all versions of Android.
 
 ##How It Works
-At a high level, the script scans each file and does a search for 'R.drawable.' or "@drawable/". Afterwards it checks each resource inside of drawable folders to see if it was referenced anywhere.
-
-
-## How Well Does it Work
-In the 'Canvas for Android' project, we were able to cut about 46% off the raw apk size and 26% off the installed app size. It works best as a supplement to ProGuard.
+At a high level, the script scans each *.cs , *.xml , *.axml file and does a search for 'Resource.Drawable.' or "@drawable/". Afterwards it checks each resource inside of drawable folders to see if it was referenced anywhere.
 
 ##Warnings!
 * This script only works for top-level projects that aren't referenced from other projects.
