@@ -17,27 +17,37 @@ mega_bytes_deleted = 0
 #Naive method to determine if a directory is an android /res folder.
 def isResourceRoot(directory):
   return (
-  (os.path.exists(directory+"/drawable"))        or
-  (os.path.exists(directory+"/drawable-ldpi"))   or
-  (os.path.exists(directory+"/drawable-mdpi"))   or
-  (os.path.exists(directory+"/drawable-hdpi"))   or
-  (os.path.exists(directory+"/drawable-xhdpi"))  or
-  (os.path.exists(directory+"/drawable-xxhdpi")) or
-  (os.path.exists(directory+"/drawable-xxxhdpi")))
+  (os.path.exists(os.path.join(directory,"drawable")))        or
+  (os.path.exists(os.path.join(directory,"drawable-ldpi")))   or
+  (os.path.exists(os.path.join(directory,"drawable-mdpi")))   or
+  (os.path.exists(os.path.join(directory,"drawable-hdpi")))   or
+  (os.path.exists(os.path.join(directory,"drawable-xhdpi")))  or
+  (os.path.exists(os.path.join(directory,"drawable-xxhdpi"))) or
+  (os.path.exists(os.path.join(directory,"drawable-xxxhdpi"))))
 
 #We only want to remove unused PICTURES (pngs)
 def addFile(fileName):
-  fileName = fileName.replace("R.drawable.", "").replace("@drawable/","")
+  fileName = fileName.replace("Resource.Drawable.", "").replace("@drawable/","")
   used_drawable_files.add(fileName)
 
 #Check to see what resources are referenced in this function.
 def checkFileForResources(fileAsString):
-  file = open(fileAsString, 'r')
-  contents = file.read()
-  file.close()
+  if not fileAsString.endswith('.cs') and not fileAsString.endswith('.xml') and not fileAsString.endswith('.axml'):
+    return
+  
+  try:
+    with open(fileAsString, 'r', encoding="utf-8") as file:
+      contents = file.read()
+  except:
+    try:
+      with open(fileAsString, 'r') as file:
+        contents = file.read()
+    except:
+      print(fileAsString)
+      raise
 
   #Handle code files.
-  pattern = re.compile('R.drawable.[a-zA-Z0-9_]*')
+  pattern = re.compile('Resource.Drawable.[a-zA-Z0-9_]*')
   results = pattern.findall(contents)
   for result in results:
     addFile(result)
@@ -47,7 +57,7 @@ def checkFileForResources(fileAsString):
   results = pattern.findall(contents)
   for result in results:
     addFile(result)
-
+	
 #We only want to if it's an unreferenced PNG.
 def deleteIfUnusedPNG(directory, fileName):
     if fileName.endswith(".png"):
@@ -60,12 +70,12 @@ def deleteIfUnusedPNG(directory, fileName):
 
         #Do stats tracking.
         files_deleted += 1
-        current_file_size = os.path.getsize(directory+"/"+fileName) / 1024.0 / 1024.0
+        current_file_size = os.path.getsize(os.path.join(directory,fileName)) / 1024.0 / 1024.0
         mega_bytes_deleted += current_file_size
 
         #Actually delete the file.
-        os.unlink(directory+"/"+fileName)
-        print ("Deleted (%.2f Mbs): " + directory+"/"+fileName) % current_file_size
+        os.unlink(os.path.join(directory,fileName))
+        print(("Deleted (%.2f Mbs): " + os.path.join(directory,fileName)) % current_file_size)
 
 ##########
 ## MAIN ##
@@ -73,7 +83,7 @@ def deleteIfUnusedPNG(directory, fileName):
 
 #Make sure they passed in a project source directory.
 if not len(sys.argv) == 2:
-  print 'Usage: "python ImageSweep.py project_src_directory"'
+  print ('Usage: "python ImageSweep.py project_src_directory"')
   quit()
 
 rootDirectory = sys.argv[1]
@@ -85,7 +95,7 @@ for root, dirs, files in os.walk(rootDirectory):
     resDirectory = root
 
   for file in files:
-    checkFileForResources(root+"/"+file)
+    checkFileForResources(os.path.join(root,file))
 
 #Delete the unused pngs.
 for root, dirs, files in os.walk(resDirectory):
@@ -93,6 +103,6 @@ for root, dirs, files in os.walk(resDirectory):
       deleteIfUnusedPNG(root, file)
 
 #Print out how many files were actually deleted.
-print ""
-print "%d file(s) deleted" % (files_deleted)
-print "%.2f megabytes freed" % (mega_bytes_deleted)
+print("")
+print("%d file(s) deleted" % (files_deleted))
+print("%.2f megabytes freed" % (mega_bytes_deleted))
